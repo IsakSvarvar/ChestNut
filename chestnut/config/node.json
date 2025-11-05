@@ -1,0 +1,7 @@
+{
+  "node_name": "node1",
+  "node_type": "storage",
+  "storage_backend": "ap",
+  "scan_interval": 10,
+  "hub_id": null
+}

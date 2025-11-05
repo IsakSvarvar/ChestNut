@@ -1,0 +1,5 @@
+#exclude logging data
+chestnut/data/
+
+#exclude cache
+chestnut/cache/

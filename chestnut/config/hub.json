@@ -1,0 +1,8 @@
+{
+  "scan_interval": 10,
+  "save_interval": 60,
+  "cache_path": "/chestnut/cache/inventory.json",
+  "job_cache_path": "/chestnut/cache/pending_jobs.json",
+  "ping_interval": 20,
+  "offline_timeout": 60
+}

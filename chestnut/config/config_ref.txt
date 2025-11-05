@@ -1,0 +1,5 @@
+---
+Node.json
+---
+
+Storage backend: "vanilla" or "ap" if using Advanced Peripherals
