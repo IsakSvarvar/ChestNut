@@ -1,0 +1,9 @@
+{
+    "triggerTaskOnSave.tasks": {
+        "Generate Manifest": [
+            "**/*.*",
+            "*.*",
+            "!manifest.txt"
+        ]
+    }
+}
