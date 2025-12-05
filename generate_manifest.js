@@ -1,23 +1,26 @@
 // generate_manifest.js
-// Generate manifest.txt from tracked files in Git.
-// - Respects .gitignore automatically via `git ls-files`
-// - Excludes .gitignore, README/README.md, and (optionally) manifest.txt itself.
+// Option A: Include startup.lua + everything in chestnut/
 
-const { execSync } = require("child_process");
 const fs = require("fs");
+const { execSync } = require("child_process");
 
-let output = execSync("git ls-files", { encoding: "utf8" })
+const MANIFEST = "manifest.txt";
+
+// --- Collect startup file (explicit) ---
+const alwaysInclude = ["startup.lua"];
+
+// --- Collect everything inside chestnut/ ---
+let chestnutFiles = execSync("git ls-files chestnut", { encoding: "utf8" })
   .split(/\r?\n/)
   .filter(Boolean);
 
-// Exclude some specific files
-output = output.filter((f) => {
-  const lower = f.toLowerCase();
-  if (f === ".gitignore") return false;
-  if (lower === "readme" || lower === "readme.md") return false;
-  if (lower === "manifest.txt") return false;
-  return true;
-});
+// --- Merge lists ---
+let files = [...alwaysInclude, ...chestnutFiles];
 
-fs.writeFileSync("manifest.txt", output.join("\n") + "\n", "utf8");
-console.log(`Generated manifest.txt with ${output.length} entries.`);
+// --- Sort for cleanliness ---
+files.sort();
+
+// --- Write manifest ---
+fs.writeFileSync(MANIFEST, files.join("\n") + "\n", "utf8");
+
+console.log(`Generated manifest.txt with ${files.length} entries.`);

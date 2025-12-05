@@ -13,4 +13,5 @@ chestnut/services/hub.lua
 chestnut/services/hubcli.lua
 chestnut/services/storagenode.lua
 chestnut/services/terminal.lua
+chestnut/update.lua
 startup.lua
