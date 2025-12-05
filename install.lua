@@ -1,83 +1,54 @@
--- ChestNut Bootstrap Installer (Option A)
--- This file is never installed locally; it only installs ChestNut runtime files.
--- Uses wget exclusively (works even with http disabled).
+-- ChestNut Installer (auto-detect branch)
 
-local REPO = "https://raw.githubusercontent.com/IsakSvarvar/ChestNut/main/"
-local MANIFEST = "manifest.txt"
+-- argv[1] is provided by `wget run <url>`
+local selfUrl = ({...})[1] or ""
+local branch = "main"
 
-----------------------------------------------------------------
--- Helper: download a file and ensure its directory exists
-----------------------------------------------------------------
-local function fetch(url, out)
-    local dir = fs.getDir(out)
-    if dir ~= "" and not fs.exists(dir) then
-        fs.makeDir(dir)
-    end
-
-    print("Downloading: " .. out)
-    local ok = shell.run("wget", url, out)
-    if not ok then
-        print("FAILED downloading " .. url)
-        return false
-    end
-    return true
+-- Try to detect branch from the URL
+-- Pattern matches: /IsakSvarvar/ChestNut/<branch>/install.lua
+local detected = selfUrl:match("ChestNut/(.-)/install.lua$")
+if detected then
+    branch = detected
 end
 
-----------------------------------------------------------------
--- Step 1: Fetch manifest
-----------------------------------------------------------------
+local REPO = "https://raw.githubusercontent.com/IsakSvarvar/ChestNut/" .. branch .. "/"
+local MANIFEST = "manifest.txt"
+
+local function fetch(url, out)
+    local dir = fs.getDir(out)
+    if dir ~= "" and not fs.exists(dir) then fs.makeDir(dir) end
+    print("Downloading: " .. out)
+    return shell.run("wget", url, out)
+end
+
 print("=== ChestNut Installer ===")
+print("Using branch:", branch)
+print("Repository:", REPO)
 print("Fetching manifest...")
 
 if not fetch(REPO .. MANIFEST, MANIFEST) then
-    error("Could not download manifest.txt. Aborting.")
+    error("Could not download manifest")
 end
 
-----------------------------------------------------------------
--- Step 2: Read manifest entries
-----------------------------------------------------------------
+-- Load manifest
 local f = fs.open(MANIFEST, "r")
 local files = {}
 while true do
     local line = f.readLine()
     if not line then break end
-
-    line = line:gsub("^%s+", ""):gsub("%s+$", "")
-    if line ~= "" then
-        table.insert(files, line)
-    end
+    table.insert(files, line)
 end
 f.close()
 
-print("Manifest loaded. " .. #files .. " files to install.\n")
+print("Installing " .. #files .. " files...\n")
 
-----------------------------------------------------------------
--- Step 3: Download all files listed in manifest
-----------------------------------------------------------------
 for _, file in ipairs(files) do
-    if not fetch(REPO .. file, file) then
-        print("WARNING: Could not fetch " .. file)
-    end
+    fetch(REPO .. file, file)
 end
 
-----------------------------------------------------------------
--- Step 4: Cleanup installer traces
--- If installer was run via `wget run`, no cleanup needed.
--- But if run manually, this prevents the installer from staying installed.
-----------------------------------------------------------------
+-- Auto-remove installer if present
 if fs.exists("install.lua") then
-    print("Removing installer (cleanup)...")
     fs.delete("install.lua")
 end
 
-----------------------------------------------------------------
--- Step 5: Finish
-----------------------------------------------------------------
-print("\nChestNut installed successfully!")
-print("Ensure /startup.lua contains:")
-print('  shell.run("startup.lua")  (if startup.lua contains the logic)')
-print("or if startup.lua calls into chestnut:")
-print('  shell.run("chestnut/startup.lua")')
-
-print("\nYou can now run:")
-print("  chestnut/startup.lua  (or your chosen entrypoint)")
+print("\nChestNut install complete!")
