@@ -1,12 +1,12 @@
--- ChestNut Installer (auto-detect branch)
+-- argv[1] may contain the URL when using `wget run`
+local args = { ... }
+local selfUrl = args[1] or ""
 
--- argv[1] is provided by `wget run <url>`
-local selfUrl = ({...})[1] or ""
-local branch = "main"
+local branch = "main" -- fallback
 
--- Try to detect branch from the URL
--- Pattern matches: /IsakSvarvar/ChestNut/<branch>/install.lua
-local detected = selfUrl:match("ChestNut/(.-)/install.lua$")
+-- Match ANY branch name between ChestNut/<branch>/install.lua
+local detected = selfUrl:match("ChestNut/([^/]+)/install.lua")
+
 if detected then
     branch = detected
 end
