@@ -1,4 +1,4 @@
 {
-  "bus_channel": 1000,
+  "bus_channel": 100,
   "log_level": "info"
 }
