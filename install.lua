@@ -1,15 +1,9 @@
--- argv[1] may contain the URL when using `wget run`
-local args = { ... }
-local selfUrl = args[1] or ""
-print("installer URL arg:", textutils.serialize(args))
-local branch = "main" -- fallback
+-- Detect branch based on where this file was loaded from
+local src = debug.getinfo(1, "S").source or ""
+-- Example source:
+-- "https://raw.githubusercontent.com/IsakSvarvar/ChestNut/dev/install.lua"
 
--- Match ANY branch name between ChestNut/<branch>/install.lua
-local detected = selfUrl:match("ChestNut/([^/]+)/install.lua")
-
-if detected then
-    branch = detected
-end
+local branch = src:match("ChestNut/([^/]+)/install.lua") or "main"
 
 local REPO = "https://raw.githubusercontent.com/IsakSvarvar/ChestNut/" .. branch .. "/"
 local MANIFEST = "manifest.txt"
