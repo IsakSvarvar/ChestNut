@@ -1,7 +1,7 @@
 -- argv[1] may contain the URL when using `wget run`
 local args = { ... }
 local selfUrl = args[1] or ""
-
+print("installer URL arg:", textutils.serialize(args))
 local branch = "main" -- fallback
 
 -- Match ANY branch name between ChestNut/<branch>/install.lua
