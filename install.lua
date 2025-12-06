@@ -1,9 +1,5 @@
--- Detect branch based on where this file was loaded from
-local src = debug.getinfo(1, "S").source or ""
--- Example source:
--- "https://raw.githubusercontent.com/IsakSvarvar/ChestNut/dev/install.lua"
-
-local branch = src:match("ChestNut/([^/]+)/install.lua") or "main"
+local args = { ... }
+local branch = args[1] or "main"
 
 local REPO = "https://raw.githubusercontent.com/IsakSvarvar/ChestNut/" .. branch .. "/"
 local MANIFEST = "manifest.txt"
