@@ -1,10 +1,10 @@
--- ChestNut Updater (Option A)
--- Updates everything listed in manifest.txt except config files
+local args = { ... }
+local branch = args[1] or "main"
 
-local REPO = "https://raw.githubusercontent.com/IsakSvarvar/ChestNut/main/"
+local REPO = "https://raw.githubusercontent.com/IsakSvarvar/ChestNut/" .. branch .. "/"
 local MANIFEST = "manifest.txt"
 
--- Files that should NOT be overwritten
+-- Files that should not be overwritten
 local EXCLUDE = {
     ["chestnut/config/system.json"] = true,
     ["chestnut/config/node.json"]   = true,
