@@ -15,7 +15,7 @@ local backend_name = node_cfg.storage_backend or "vanilla"
 local storage = require("chestnut.modules." .. backend_name .. "_storage")
 
 -- Node metadata
-local NODE_NAME     = node_cfg.node_name or "UnnamedNode"
+local NODE_NAME = ("%s_%d"):format(os.getComputerID(), node_cfg.node_name or "UnnamedNode")
 local SCAN_INTERVAL = node_cfg.scan_interval or 10
 
 local running = true

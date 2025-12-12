@@ -147,7 +147,7 @@ function M.validate_packet(packet)
   if not is_table(packet) then return false, "packet must be a table" end
   if packet.type == nil then return false, "packet missing 'type'" end
   if packet.body == nil then return false, "packet missing 'body'" end
-  return M.validate_body(pkt.type, pkt.body)
+  return M.validate_body(packet.type, packet.body)
 end
 
 return M
