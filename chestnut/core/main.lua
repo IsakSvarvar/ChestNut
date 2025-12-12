@@ -54,4 +54,22 @@ while true do
     local svc = SERVICES[choice]
     clear()
     util.info("Starting service:", svc.name)
-    print("Start
+    print("Starting " .. svc.name .. "...\n")
+
+    shell.run(svc.path)
+
+    print("\nService exited. Returning to launcher.")
+    util.info("Service exited:", svc.name)
+    sleep(1)
+
+  elseif choice == #SERVICES + 1 then
+    clear()
+    print("Dropping to shell. Type 'reboot' to return to launcher.")
+    util.info("Dropping to shell.")
+    return
+
+  else
+    print("Invalid selection.")
+    sleep(1)
+  end
+end
