@@ -27,7 +27,7 @@ M.SCHEMAS = {
   },
 
   pong = {
-    required = {},
+    required = { "node" },
     optional = {},
   },
 

@@ -102,7 +102,8 @@ function M.listen(handler)
 
     -- HARD-CODED SYSTEM HANDLER: ping/pong
     if msg.type == "ping" then
-      M.send(id, "pong", {})
+      local name = os.getComputerLabel() or "node_" .. os.getComputerID() --TODO: find universal way to track naming SUGGESTION when configuring system first time, give it a name. this variable is used everywhere.
+      M.send(id, "pong", { node = name })
       goto continue
     end
 
