@@ -34,7 +34,7 @@ term.setTextColor(colors.white)
 -- For now, just wait for Ctrl+T (terminate)
 while true do
 	os.pullEvent("terminate")
-	util.warn("Manual terminate received — shutting down.")
+	util.warn("Manual terminate received - shutting down.")
 	break
 end
 

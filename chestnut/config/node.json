@@ -1,5 +1,5 @@
 {
-  "node_name": "node1",
+  "node_name": "node",
   "node_type": "storage",
   "storage_backend": "ap",
   "scan_interval": 10,

@@ -4,6 +4,7 @@ chestnut/config/node.json
 chestnut/config/system.json
 chestnut/core/bus.lua
 chestnut/core/main.lua
+chestnut/core/protocol.lua
 chestnut/core/util.lua
 chestnut/drawer_debug.lua
 chestnut/interfaces/storage_interface.lua

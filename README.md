@@ -1,7 +1,7 @@
 # ChestNut
 ## A Computercraft based storage and logistics system
 
-This system can run on its own but it's originally made with the Create and Advanced Pheriperals mods in mind
+This system can run on its own but it's originally made with the Create and Advanced Peripherals mods in mind
 
 Usage:
 In a CC computer, run:
