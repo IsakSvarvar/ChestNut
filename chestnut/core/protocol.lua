@@ -39,12 +39,12 @@ M.SCHEMAS = {
 
   query_inventory = {
     required = {},
-    optional = { "request" },       -- e.g. "all", "flat", "node:<name>"
+    optional = { "request" }, -- e.g. "all", "flat", "node:<name>"
   },
 
   inventory_data = {
-    required = { "data" },          -- payload (flat map OR hub cache)
-    optional = { "format" },        -- "flat" | "per_node"
+    required = { "data" }, -- payload (flat map OR hub cache)
+    optional = { "format" }, -- "flat" | "per_node"
   },
 
   -- === Transfers ===
