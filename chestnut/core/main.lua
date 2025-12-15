@@ -15,9 +15,7 @@ util.set_log_file("/chestnut/data/logs/core.log")
 ----------------------------------------------------------
 local SERVICES = {
   { name = "Hub",          path = "/chestnut/services/hub.lua" },
-  { name = "Storage Node", path = "/chestnut/services/storagenode.lua" },
-  { name = "Terminal",     path = "/chestnut/services/terminal.lua" },
-  { name = "Hub CLI",      path = "/chestnut/services/hubcli.lua" },
+  { name = "Storage Node", path = "/chestnut/services/storagenode.lua" }
 }
 
 ----------------------------------------------------------
