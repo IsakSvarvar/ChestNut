@@ -19,6 +19,9 @@ local NODE_ID   = os.getComputerID()
 local BASE_NAME = node_cfg.node_name or "node"
 local NODE_NAME = ("%s_%d"):format(BASE_NAME, NODE_ID)
 local SCAN_INTERVAL = node_cfg.scan_interval or 10
+local HUB_ID = node_cfg.hub_id
+assert(HUB_ID, "node.json missing hub_id (required)")
+
 
 local running = true
 
@@ -27,7 +30,7 @@ local running = true
 ----------------------------------------------------------
 local function send_update()
   local items = storage.list()
-  bus.broadcast("node_update", {
+  bus.send(HUB_ID, "node_update", {
     node      = NODE_NAME,
     items     = items,
     timestamp = os.clock()

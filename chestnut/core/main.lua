@@ -4,6 +4,11 @@
 package.path = "/?.lua;/?/init.lua;/chestnut/?.lua;/chestnut/?/init.lua;" .. package.path
 local util = require("chestnut.core.util")
 
+-- Computer metadata
+local COMPUTER_ID    = os.getComputerID()
+local COMPUTER_LABEL = os.getComputerLabel() or "<no label>"
+
+
 ----------------------------------------------------------
 -- Logging
 ----------------------------------------------------------
@@ -31,6 +36,10 @@ end
 local function draw_menu()
   clear()
   print("Chestnut Launcher\n")
+  print(("Computer ID   : %d"):format(COMPUTER_ID))
+  print(("Computer Name : %s"):format(COMPUTER_LABEL))
+  print(string.rep("-", 28))
+
 
   for i, svc in ipairs(SERVICES) do
     print(("%d) %s"):format(i, svc.name))
