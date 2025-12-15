@@ -1,0 +1,111 @@
+ChestNut is a storage and logistics system designed for computercraft (CC:Tweaked).
+
+The system should be installable on just pure CC, but since it will mostly live alongside Advanced Peripherals,Create mod etc it will have modules for that functionality.
+- The system is designed on a node basis. Computers will be placed around the world and configured to different tasks.
+- There will be one hub that is always chunkloaded. this hub will keep track of all nodes, their status and proccess requests
+- Nodes will have to be able to cope with getting their chunks unloaded. The hub should be able to handle this.
+- There are different types of nodes, Like storage handlers, Kiosks etc
+The desired user experience when installing is the following:
+    - User runs ChestNut installer on computer and restarts it
+    - User is greeted by a GUI that lets you configure the computer into all the different nodes
+    - Settings will be loaded on startup
+    - managing any chests, redstone signals, I/Os etc should be easy. Being able to label and lay out logic should be managable.
+
+Example scenario 1 - Item delivery:
+1. I am building somewhere and ran out of wood and cobblestone.
+2. I open my pocket kiosk and select order item menu.
+3. Select which storage node I'd like to order from, for example "bob's storage". All items are listed and im able to create my order.
+4. Select delivery location. These locations might be railway stations along  the create railway network.
+5. When the order is sent the hub (sends and) loads a train in bobs storage with requested items. the train is then given the order to drive over to delivery location and drop the stuff off.
+6. The order progress can be tracked, provides time estimates.
+7. User is notified when order has arrived. The train is then sent back to original location/depot.
+
+Example scenario 2 - Automated deliveries:
+1. I have a factory that requires lava. The lava tank is monitored by a node.
+2. When the lava is running low, the node can automatically make a order request for more lava to be delivered.
+3. Train is sent to deliver the lava.
+
+Example scenario 3 - Tree farm node:
+1. A storage node might not have enough wood. It can make a request for a train to deliver wood from the woodfarm.
+2. A train gets sent to tree farm to pick up more wood.
+3. Since the train picked up lots of wood and the stock is below a treshhold we want to send a redstone signal to activate a chunk loader.
+4. The chunk stays loaded until the storage has reached a certain treshhold. The chunkloader is turned off and farm unloaded.
+
+
+
+# ChestNut Protocol (Draft)
+
+## Roles
+- **Hub**: authoritative inventory cache, node liveness tracking, job queue, and command router.
+- **StorageNode**: exposes inventory state and executes hub commands (scan, transfer, ping/pong).
+- **Terminal/Kiosk**: user-facing UI; discovers hub, queries inventories, and requests items.
+- **(Future) Train/Logistics Node**: executes delivery jobs; will consume `request_item` jobs.
+
+## Transport
+- **Channel**: Rednet protocol `chestnut`.
+- **Envelope**: `{ sender=<id>, type=<string>, body=<table> }`.
+- **Hub discovery**: terminals broadcast `whois_hub`; hub responds with `hub_hello`.
+- **Heartbeat**: hub pings nodes; nodes reply with `pong`.
+
+## Message Types (current)
+- `whois_hub` (Terminal → broadcast): `{ role="terminal" }`
+- `hub_hello` (Hub → Terminal): `{ node="hub", id=<hub_id> }`
+- `node_update` (Node → broadcast): `{ node=<name>, items=<map>, timestamp=<os.clock()> }`
+- `ping` (Hub → Node): `{ hub="main" }`
+- `pong` (Node → Hub): `{ node=<name> }`
+- `query_inventory` (Terminal → Hub): `{ request="all" }`
+- `inventory_data` (Hub → Terminal): body is either a flat map or `{ [node] = { items=<map>, timestamp=<t>, sender=<id> } }`
+- `list_inventories_request` (Terminal → Hub): `{}`
+- `list_inventories` (Hub → Node): `{}`
+- `inventory_list` (Node → Hub): `{ node=<name>, inventories=<array of { name, type }> }`
+- `inventory_list_result` (Hub → Terminal): `inventory_list` body forwarded
+- `request_item` (Terminal → Hub): `{ item=<string>, count=<int>, target=<peripheral/alias> }` (not yet executed by hub)
+- `transfer` (Hub → Node): `{ item=<string>, count=<int>, target=<peripheral/alias> }`
+- `transfer_result` (Node → Hub): `{ node=<name>, item=<string>, moved=<int> }`
+
+## Behaviors & Timers
+- **Hub ping interval**: `hub.json` `ping_interval` (default 20s).
+- **Node offline timeout**: `hub.json` `offline_timeout` (default 60s); hub marks node offline if no updates/pongs.
+- **Hub autosave**: `hub.json` `save_interval` (default 60s); saves inventory cache and pending jobs.
+- **Terminal hub discovery timeout**: 5s (`HUB_TIMEOUT`).
+- **Terminal refresh**: 15s (`REFRESH_INTERVAL`).
+
+## State & Persistence
+- **Hub cache**: `/chestnut/cache/inventory.json` — last known inventories per node.
+- **Hub job queue**: `/chestnut/cache/pending_jobs.json` — jobs queued when nodes are offline.
+- **Node scan**: periodic `storage.list()` → `node_update` every `scan_interval` (default 10s).
+- **Logs**: core sets `/chestnut/data/logs/core.log`.
+
+## Node Types & Backends
+- **Storage backend**: `node.json.storage_backend` → `chestnut.modules.<backend>_storage` (ships: `vanilla`, `ap`).
+- **Node metadata**: `node.json` provides `node_name`, `node_type` (default `"storage"`), `hub_id` (unused in code today), `scan_interval`.
+
+## Expected Flows
+1) **Node startup**: node scans inventories and broadcasts `node_update` every `scan_interval`.
+2) **Hub tracking**: hub records `node_update`, marks node online, caches inventories, queues commands if offline, replays on reconnect.
+3) **Heartbeat**: hub `ping` → node `pong`; missing pong + timeout ⇒ node marked offline.
+4) **Terminal startup**: broadcast `whois_hub` → receive `hub_hello`; then `query_inventory` → render cache.
+5) **Transfer**: hub sends `transfer` to node → node moves items → node replies `transfer_result` (currently hub just logs).
+
+## Open Gaps / To Define
+- **Auth/identity**: none; all nodes trusted. Consider minimal hub_id matching.
+- **Schema**: define item map shape (e.g., `{ ["minecraft:oak_log"]=count }`) and inventory listing contract.
+- **Error reporting**: no NAKs or error codes; add `error` field to `transfer_result`/requests.
+- **Chunk unload handling**: only heartbeat-based; define reconnect behavior and cache staleness rules.
+- **Request execution**: `request_item` is not implemented in hub; specify how it becomes `transfer`/delivery jobs.
+- **Backpressure**: no rate limiting; consider max items per `node_update` or diff-based updates.
+- **Versioning**: add `protocol_version` in `hub_hello`/`node_update` to allow upgrades.
+
+## Proposed Extensions (next steps)
+- Add `protocol_version` and optional `capabilities` array to `hub_hello` and `node_update`.
+- Standardize payloads:
+  - `node_update`: `{ node, node_type, items, timestamp, capabilities?, protocol_version? }`
+  - `transfer_result`: `{ node, item, requested=<int>, moved=<int>, error? }`
+- Implement `request_item` path in hub: translate to `transfer` for now; later route to logistics nodes (trains).
+- Add `job_ack` for queued commands replayed after reconnect.
+- Publish config examples: `settings.example.json`, `node.json`, `hub.json`, `system.json` with field descriptions.
+- Document timeouts and recommended values per environment (single-player vs. server).
+
+## Compatibility Notes
+- Transport assumes Rednet modems or AP Ender Modems; if none found, bus logs a warning and returns `no_modem`.
+- Envelope is plain Lua tables; keep payloads small to avoid Rednet size limits.

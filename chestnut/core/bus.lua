@@ -4,6 +4,7 @@
 -- Keeps things simple and reliable.
 
 local util = require("chestnut.core.util")
+local protocol = require("chestnut.core.protocol")
 local M = {}
 
 local PROTOCOL = "chestnut"
@@ -32,7 +33,7 @@ function M.open()
   modemList = find_modems()
 
   if #modemList == 0 then
-    util.warn("No modems detected — Rednet not available.")
+    util.warn("No modems detected - Rednet not available.")
     return false
   end
 
@@ -64,7 +65,7 @@ function M.send(target, type, body)
   if not isOpen then return false, "no_modem" end
   local msg = { sender = os.getComputerID(), type = type, body = body }
   local ok = rednet.send(target, msg, PROTOCOL)
-  util.debug("→", target, type, body)
+  util.debug("->", target, type, body)
   return ok
 end
 
@@ -73,7 +74,7 @@ function M.broadcast(type, body)
   if not isOpen then return false, "no_modem" end
   local msg = { sender = os.getComputerID(), type = type, body = body }
   local ok = rednet.broadcast(msg, PROTOCOL)
-  util.debug("→ broadcast", type, body)
+  util.debug("-> broadcast", type, body)
   return ok
 end
 
@@ -82,21 +83,45 @@ function M.listen(handler)
   if not isOpen then return false, "no_modem" end
 
   util.info("Listening on protocol:", PROTOCOL)
+
   while true do
     local id, msg, proto = rednet.receive(PROTOCOL)
-    if type(msg) == "table" and msg.type then
-      util.debug("←", msg.type, "from", id)
-      local ok, stop = pcall(handler, msg.type, msg.body, id)
-      if not ok then util.error("Handler error:", stop) end
-      if stop then
-        util.info("Listener stopped by handler.")
-        break
-      end
-    else
-      util.warn("Received malformed message from", id)
+
+    -- basic shape check
+    if type(msg) ~= "table" then
+      util.warn("Dropping non-table packet from", id)
+      goto continue
     end
+
+    -- protocol validation
+    local ok, err = protocol.validate_packet(msg)
+    if not ok then
+      util.warn("Dropping invalid packet from", id, ":", err)
+      goto continue
+    end
+
+    -- HARD-CODED SYSTEM HANDLER: ping/pong
+    if msg.type == "ping" then
+      local name = os.getComputerLabel() or "node_" .. os.getComputerID() --TODO: find universal way to track naming SUGGESTION when configuring system first time, give it a name. this variable is used everywhere.
+      M.send(id, "pong", { node = name })
+      goto continue
+    end
+
+    -- application-level handling
+    util.debug("<-", msg.type, "from", id)
+    local success, stop = pcall(handler, msg.type, msg.body, id)
+    if not success then
+      util.error("Handler error:", stop)
+    end
+    if stop then
+      util.info("Listener stopped by handler.")
+      break
+    end
+
+    ::continue::
   end
 end
+
 
 function M.is_open()
   return isOpen

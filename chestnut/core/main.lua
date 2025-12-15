@@ -1,41 +1,82 @@
 -- /chestnut/core/main.lua
--- Chestnut Core Bootstrap
+-- Chestnut Core Launcher
 
-package.path = "/?.lua;/?/init.lua;" .. package.path
+package.path = "/?.lua;/?/init.lua;/chestnut/?.lua;/chestnut/?/init.lua;" .. package.path
 local util = require("chestnut.core.util")
 
--- === 1. Startup log ===
+-- Computer metadata
+local COMPUTER_ID    = os.getComputerID()
+local COMPUTER_LABEL = os.getComputerLabel() or "<no label>"
+
+
+----------------------------------------------------------
+-- Logging
+----------------------------------------------------------
 util.set_log_level("info")
 util.set_log_file("/chestnut/data/logs/core.log")
 
-util.info("==== Chestnut Boot ====")
+----------------------------------------------------------
+-- Services
+----------------------------------------------------------
+local SERVICES = {
+  { name = "Hub",          path = "/chestnut/services/hub.lua" },
+  { name = "Storage Node", path = "/chestnut/services/storagenode.lua" }
+}
 
--- === 2. Load configuration ===
-local cfg = util.load_json("/chestnut/config/settings.json", {})
-util.debug("Loaded config:", cfg)
-
--- === 3. Detect environment ===
-local computerLabel = os.getComputerLabel() or ("Computer_" .. os.getComputerID())
-util.info(("Running on: %s (ID %d)"):format(computerLabel, os.getComputerID()))
-
--- === 4. Print summary ===
-util.info("Storage provider:", cfg.storage_provider or "none")
-util.info("Hub ID:", cfg.hub_id or "(none)")
-
--- === 5. Check paths ===
-util.ensure_dir_for("/chestnut/data/logs/core.log")
-
--- === 6. Friendly greeting ===
-term.setTextColor(colors.yellow)
-print("Chestnut is online and standing by.")
-term.setTextColor(colors.white)
-
--- === 7. Idle / hold loop ===
--- For now, just wait for Ctrl+T (terminate)
-while true do
-	os.pullEvent("terminate")
-	util.warn("Manual terminate received — shutting down.")
-	break
+----------------------------------------------------------
+-- UI helpers
+----------------------------------------------------------
+local function clear()
+  term.setBackgroundColor(colors.black)
+  term.setTextColor(colors.white)
+  term.clear()
+  term.setCursorPos(1, 1)
 end
 
-util.info("Goodbye from Chestnut.")
+local function draw_menu()
+  clear()
+  print("Chestnut Launcher\n")
+  print(("Computer ID   : %d"):format(COMPUTER_ID))
+  print(("Computer Name : %s"):format(COMPUTER_LABEL))
+  print(string.rep("-", 28))
+
+
+  for i, svc in ipairs(SERVICES) do
+    print(("%d) %s"):format(i, svc.name))
+  end
+  print(("%d) Shell"):format(#SERVICES + 1))
+
+  print("\nSelect option:")
+end
+
+----------------------------------------------------------
+-- Main loop
+----------------------------------------------------------
+while true do
+  draw_menu()
+  write("> ")
+  local choice = tonumber(read())
+
+  if choice and choice >= 1 and choice <= #SERVICES then
+    local svc = SERVICES[choice]
+    clear()
+    util.info("Starting service:", svc.name)
+    print("Starting " .. svc.name .. "...\n")
+
+    shell.run(svc.path)
+
+    print("\nService exited. Returning to launcher.")
+    util.info("Service exited:", svc.name)
+    sleep(1)
+
+  elseif choice == #SERVICES + 1 then
+    clear()
+    print("Dropping to shell. Type 'reboot' to return to launcher.")
+    util.info("Dropping to shell.")
+    return
+
+  else
+    print("Invalid selection.")
+    sleep(1)
+  end
+end
